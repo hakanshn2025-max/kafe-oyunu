@@ -1,199 +1,111 @@
-const cafe = document.querySelector(".cafe");
-const moneyDisplay = document.querySelector("#money");
-const customersDisplay = document.querySelector("#customers");
-const dayDisplay = document.querySelector("#day");
+const cafe=document.getElementById("cafe");
+const moneyEl=document.getElementById("money");
+const customersEl=document.getElementById("customers");
+const ratingEl=document.getElementById("rating");
+const dayEl=document.getElementById("day");
+const statusEl=document.getElementById("status");
+const logEl=document.getElementById("log");
+const tableEls=[...document.querySelectorAll(".table")];
 
-let money = 100;
-let customers = 0;
-let day = 1;
+let money=500;
+let customers=0;
+let day=1;
+let rating=1.0;
+let upgradeLevel=0;
+const busy=[false,false,false,false];
 
-const tables = [
-    { x: 8, y: 18 },
-    { x: 52, y: 18 },
-    { x: 8, y: 48 },
-    { x: 52, y: 48 }
-];
+const names=["Ahmet","Zeynep","Mehmet","Elif","Can","Ece","Mert","Duru","Burak","Selin"];
+const faces=["🙂","😄","😎","😊","👨‍🦱","👩","🧔","👨","👩‍🦰","🧑"];
 
-const occupied = [false, false, false, false];
-
-function updateUI() {
-    moneyDisplay.textContent = money + " ₺";
-    customersDisplay.textContent = customers;
-    dayDisplay.textContent = "Gün " + day;
+function ui(){
+  moneyEl.textContent=Math.floor(money);
+  customersEl.textContent=customers;
+  ratingEl.textContent=rating.toFixed(1);
+  dayEl.textContent=day;
 }
 
-function createTables() {
-    tables.forEach((pos, index) => {
-        const table = document.createElement("div");
-
-        table.className = "table";
-        table.style.left = pos.x + "%";
-        table.style.top = pos.y + "%";
-        table.dataset.index = index;
-
-        table.innerHTML = `
-            <span class="table-number">Masa ${index + 1}</span>
-        `;
-
-        cafe.appendChild(table);
-    });
+function notify(text){
+  logEl.textContent=text;
+  const old=document.querySelector(".toast"); if(old) old.remove();
+  const t=document.createElement("div"); t.className="toast"; t.textContent=text;
+  document.body.appendChild(t);
+  setTimeout(()=>t.remove(),1800);
 }
 
-function findFreeTable() {
-    for (let i = 0; i < occupied.length; i++) {
-        if (!occupied[i]) {
-            return i;
-        }
-    }
-
-    return -1;
+function freeTable(){
+  const free=busy.map((v,i)=>v?null:i).filter(v=>v!==null);
+  return free.length?free[Math.floor(Math.random()*free.length)]:-1;
 }
 
-function spawnCustomer() {
+function spawnCustomer(){
+  const ti=freeTable();
+  if(ti<0){statusEl.textContent="Tüm masalar dolu!";return}
+  busy[ti]=true; customers++; ui();
+  statusEl.textContent="Müşteri geldi!";
+  const c=document.createElement("div");
+  c.className="customer";
+  const name=names[Math.floor(Math.random()*names.length)];
+  const face=faces[Math.floor(Math.random()*faces.length)];
+  c.innerHTML=`<div class="customer-body">${face}</div><div class="customer-name">${name}</div>`;
+  c.style.left=(Math.random()*78+8)+"%"; c.style.top="-12%";
+  c.style.animation="arrive .4s ease";
+  cafe.appendChild(c);
 
-    const tableIndex = findFreeTable();
+  const table=tableEls[ti];
+  const tx=parseFloat(table.style.left)+4;
+  const ty=parseFloat(table.style.top)-8;
+  setTimeout(()=>{c.style.left=tx+"%";c.style.top=ty+"%";},120);
 
-    if (tableIndex === -1) {
-        return;
-    }
+  setTimeout(()=>{
+    c.querySelector(".customer-body").textContent="☕";
+    c.querySelector(".customer-name").textContent=name+" sipariş veriyor";
+    table.classList.add("occupied");
+    notify("☕ "+name+" siparişini aldı!");
+  },1900);
 
-    occupied[tableIndex] = true;
-    customers++;
+  const stay=4000+Math.random()*3500;
+  setTimeout(()=>{
+    c.querySelector(".customer-body").textContent="😊";
+    c.querySelector(".customer-name").textContent="Teşekkürler!";
+  },1900+stay-1100);
 
-    const customer = document.createElement("div");
-    customer.className = "customer";
+  setTimeout(()=>{
+    c.style.top="-14%";
+    table.classList.remove("occupied");
+    busy[ti]=false; customers--; ui();
 
-    const startX = Math.random() * 80 + 10;
-
-    customer.style.left = startX + "%";
-    customer.style.top = "2%";
-
-    customer.innerHTML = `
-        <div class="customer-body">🙂</div>
-        <div class="customer-name">Müşteri</div>
-    `;
-
-    cafe.appendChild(customer);
-
-    const table = document.querySelector(
-        `.table[data-index="${tableIndex}"]`
-    );
-
-    const targetX = tables[tableIndex].x + 5;
-    const targetY = tables[tableIndex].y - 7;
-
-    setTimeout(() => {
-
-        customer.style.transition = "all 2s ease";
-
-        customer.style.left = targetX + "%";
-        customer.style.top = targetY + "%";
-
-    }, 100);
-
-    setTimeout(() => {
-
-        customer.style.transition = "none";
-
-        table.classList.add("occupied");
-
-        customer.innerHTML = `
-            <div class="customer-body">☕</div>
-            <div class="customer-name">Sipariş veriyor</div>
-        `;
-
-    }, 2200);
-
-    const stayTime = 4000 + Math.random() * 4000;
-
-    setTimeout(() => {
-
-        customer.innerHTML = `
-            <div class="customer-body">😊</div>
-            <div class="customer-name">Teşekkürler!</div>
-        `;
-
-    }, 2200 + stayTime - 1000);
-
-    setTimeout(() => {
-
-        customer.style.transition = "all 1.5s ease";
-
-        customer.style.top = "-15%";
-
-        const coin = document.createElement("div");
-
-        coin.className = "money-coin";
-        coin.textContent = "₺";
-
-        coin.onclick = function () {
-
-            money += 20;
-
-            updateUI();
-
-            coin.remove();
-
-            showNotification("+20 ₺ kazandın! 💰");
-
-        };
-
-        table.appendChild(coin);
-
-        table.classList.remove("occupied");
-
-        occupied[tableIndex] = false;
-
-        customers--;
-
-        updateUI();
-
-        setTimeout(() => {
-            customer.remove();
-        }, 1600);
-
-    }, 2200 + stayTime);
+    const coin=document.createElement("button");
+    coin.className="coin"; coin.textContent="🪙"; coin.setAttribute("aria-label","Parayı topla");
+    coin.onclick=()=>{
+      money+=25+upgradeLevel*5;
+      rating=Math.min(5,rating+0.03);
+      ui(); coin.remove();
+      notify("🪙 Para toplandı! +"+(25+upgradeLevel*5)+" TL");
+    };
+    table.appendChild(coin);
+    setTimeout(()=>c.remove(),1700);
+  },1900+stay);
 }
 
-function showNotification(text) {
+document.getElementById("serveBtn").onclick=()=>{
+  if(money<10){notify("💸 Servis için paran yetmiyor!");return}
+  money+=10; rating=Math.min(5,rating+0.05); ui(); notify("🍰 Hızlı servis yaptın! +10 TL");
+};
 
-    const notification = document.createElement("div");
+document.getElementById("upgradeBtn").onclick=()=>{
+  const cost=150+upgradeLevel*100;
+  if(money<cost){notify("💸 Geliştirme için "+cost+" TL gerekiyor.");return}
+  money-=cost; upgradeLevel++; rating=Math.min(5,rating+.2);
+  ui(); notify("🔨 Kafen geliştirildi! Seviye "+upgradeLevel);
+};
 
-    notification.className = "notification";
-    notification.textContent = text;
+document.getElementById("dayBtn").onclick=()=>{
+  if(customers>0){notify("⏳ Önce müşterilerin kalkmasını bekle!");return}
+  day++; money+=75+upgradeLevel*20; rating=Math.min(5,rating+.1);
+  ui(); notify("🌅 Yeni gün! +"+(75+upgradeLevel*20)+" TL");
+};
 
-    document.body.appendChild(notification);
-
-    setTimeout(() => {
-        notification.remove();
-    }, 1800);
-}
-
-function newDay() {
-
-    day++;
-
-    money += 50;
-
-    updateUI();
-
-    showNotification("Yeni gün başladı! ☀️ +50 ₺");
-
-}
-
-createTables();
-updateUI();
-
-setInterval(() => {
-
-    spawnCustomer();
-
-}, 3500);
-
-setInterval(() => {
-
-    if (Math.random() > 0.5) {
-        spawnCustomer();
-    }
-
-}, 7000);
+ui();
+setTimeout(spawnCustomer,900);
+setInterval(spawnCustomer,4200);
+setInterval(()=>{if(Math.random()<.65)spawnCustomer()},6500);
