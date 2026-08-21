@@ -1,212 +1,199 @@
-let money = 500;
-let tableCount = 4;
-let customerCount = 0;
+const cafe = document.querySelector(".cafe");
+const moneyDisplay = document.querySelector("#money");
+const customersDisplay = document.querySelector("#customers");
+const dayDisplay = document.querySelector("#day");
 
-const tables = [];
+let money = 100;
+let customers = 0;
+let day = 1;
 
-const customers = [
-  "👨",
-  "👩",
-  "👨‍🦱",
-  "👩‍🦰",
-  "🧔",
-  "👩‍🦱",
-  "👨‍🦰",
-  "👵",
-  "👴"
+const tables = [
+    { x: 8, y: 18 },
+    { x: 52, y: 18 },
+    { x: 8, y: 48 },
+    { x: 52, y: 48 }
 ];
 
-function updateMoney() {
-  document.getElementById("money").textContent = money;
-}
+const occupied = [false, false, false, false];
 
-function updateCustomers() {
-  document.getElementById("customers").textContent = customerCount;
-}
-
-function updateTables() {
-  document.getElementById("tableNumber").textContent = tableCount;
+function updateUI() {
+    moneyDisplay.textContent = money + " ₺";
+    customersDisplay.textContent = customers;
+    dayDisplay.textContent = "Gün " + day;
 }
 
 function createTables() {
-  const container = document.getElementById("tables");
-  container.innerHTML = "";
+    tables.forEach((pos, index) => {
+        const table = document.createElement("div");
 
-  for (let i = 0; i < tableCount; i++) {
-    const table = document.createElement("div");
+        table.className = "table";
+        table.style.left = pos.x + "%";
+        table.style.top = pos.y + "%";
+        table.dataset.index = index;
 
-    table.className = "table";
-    table.id = "table-" + i;
+        table.innerHTML = `
+            <span class="table-number">Masa ${index + 1}</span>
+        `;
 
-    table.innerHTML = `
-      <div class="customer"></div>
-      <div class="table-top">🪑</div>
-      <div class="table-status">BOŞ</div>
+        cafe.appendChild(table);
+    });
+}
+
+function findFreeTable() {
+    for (let i = 0; i < occupied.length; i++) {
+        if (!occupied[i]) {
+            return i;
+        }
+    }
+
+    return -1;
+}
+
+function spawnCustomer() {
+
+    const tableIndex = findFreeTable();
+
+    if (tableIndex === -1) {
+        return;
+    }
+
+    occupied[tableIndex] = true;
+    customers++;
+
+    const customer = document.createElement("div");
+    customer.className = "customer";
+
+    const startX = Math.random() * 80 + 10;
+
+    customer.style.left = startX + "%";
+    customer.style.top = "2%";
+
+    customer.innerHTML = `
+        <div class="customer-body">🙂</div>
+        <div class="customer-name">Müşteri</div>
     `;
 
-    container.appendChild(table);
+    cafe.appendChild(customer);
 
-    tables[i] = {
-      element: table,
-      busy: false,
-      money: 0
-    };
-  }
+    const table = document.querySelector(
+        `.table[data-index="${tableIndex}"]`
+    );
+
+    const targetX = tables[tableIndex].x + 5;
+    const targetY = tables[tableIndex].y - 7;
+
+    setTimeout(() => {
+
+        customer.style.transition = "all 2s ease";
+
+        customer.style.left = targetX + "%";
+        customer.style.top = targetY + "%";
+
+    }, 100);
+
+    setTimeout(() => {
+
+        customer.style.transition = "none";
+
+        table.classList.add("occupied");
+
+        customer.innerHTML = `
+            <div class="customer-body">☕</div>
+            <div class="customer-name">Sipariş veriyor</div>
+        `;
+
+    }, 2200);
+
+    const stayTime = 4000 + Math.random() * 4000;
+
+    setTimeout(() => {
+
+        customer.innerHTML = `
+            <div class="customer-body">😊</div>
+            <div class="customer-name">Teşekkürler!</div>
+        `;
+
+    }, 2200 + stayTime - 1000);
+
+    setTimeout(() => {
+
+        customer.style.transition = "all 1.5s ease";
+
+        customer.style.top = "-15%";
+
+        const coin = document.createElement("div");
+
+        coin.className = "money-coin";
+        coin.textContent = "₺";
+
+        coin.onclick = function () {
+
+            money += 20;
+
+            updateUI();
+
+            coin.remove();
+
+            showNotification("+20 ₺ kazandın! 💰");
+
+        };
+
+        table.appendChild(coin);
+
+        table.classList.remove("occupied");
+
+        occupied[tableIndex] = false;
+
+        customers--;
+
+        updateUI();
+
+        setTimeout(() => {
+            customer.remove();
+        }, 1600);
+
+    }, 2200 + stayTime);
 }
 
-function customerArrives() {
-  const emptyTable = tables.find(table => !table.busy);
+function showNotification(text) {
 
-  if (!emptyTable) {
-    document.getElementById("status").textContent =
-      "Tüm masalar dolu 😅";
-    return;
-  }
+    const notification = document.createElement("div");
 
-  emptyTable.busy = true;
+    notification.className = "notification";
+    notification.textContent = text;
 
-  customerCount++;
-  updateCustomers();
+    document.body.appendChild(notification);
 
-  const customer =
-    customers[Math.floor(Math.random() * customers.length)];
-
-  const customerElement =
-    emptyTable.element.querySelector(".customer");
-
-  const status =
-    emptyTable.element.querySelector(".table-status");
-
-  customerElement.textContent = customer;
-  customerElement.classList.add("visible");
-
-  status.textContent = "☕ SİPARİŞ VERİYOR";
-
-  document.getElementById("status").textContent =
-    "Yeni müşteri geldi! ☕";
-
-  const waitTime =
-    5000 + Math.random() * 7000;
-
-  setTimeout(() => {
-    customerLeaves(emptyTable);
-  }, waitTime);
+    setTimeout(() => {
+        notification.remove();
+    }, 1800);
 }
 
-function customerLeaves(table) {
+function newDay() {
 
-  const customerElement =
-    table.element.querySelector(".customer");
+    day++;
 
-  const status =
-    table.element.querySelector(".table-status");
+    money += 50;
 
-  const earnings =
-    30 + Math.floor(Math.random() * 71);
+    updateUI();
 
-  table.money = earnings;
+    showNotification("Yeni gün başladı! ☀️ +50 ₺");
 
-  customerElement.classList.remove("visible");
-
-  setTimeout(() => {
-    customerElement.textContent = "";
-  }, 300);
-
-  status.innerHTML = `
-    <button class="money-button"
-      onclick="collectMoney(${tables.indexOf(table)})">
-      💰 +${earnings} TL
-    </button>
-  `;
-
-  customerCount--;
-  updateCustomers();
-
-  document.getElementById("status").textContent =
-    "Müşteri hesabı ödedi! 💰";
-}
-
-function collectMoney(index) {
-
-  const table = tables[index];
-
-  if (!table || table.money <= 0) return;
-
-  money += table.money;
-
-  table.money = 0;
-  table.busy = false;
-
-  updateMoney();
-
-  table.element.querySelector(".customer").textContent = "";
-
-  table.element.querySelector(".table-status").textContent =
-    "BOŞ";
-
-  document.getElementById("status").textContent =
-    "Para kasaya eklendi! 💰";
-
-  setTimeout(() => {
-    customerArrives();
-  }, 1500);
-}
-
-function addTable() {
-
-  if (money < 250) {
-    alert("Masa almak için 250 TL gerekiyor!");
-    return;
-  }
-
-  money -= 250;
-  tableCount++;
-
-  updateMoney();
-  updateTables();
-
-  createTables();
-
-  document.getElementById("status").textContent =
-    "Yeni masa satın alındı! 🪑";
-}
-
-function upgradeCafe() {
-
-  if (money < 500) {
-    alert("Kafeyi geliştirmek için 500 TL gerekiyor!");
-    return;
-  }
-
-  money -= 500;
-
-  updateMoney();
-
-  document.getElementById("status").textContent =
-    "🎉 Kafen geliştirildi! Müşteriler daha hızlı geliyor.";
-
-  setTimeout(() => {
-    customerArrives();
-  }, 1000);
 }
 
 createTables();
-
-updateMoney();
-updateCustomers();
-updateTables();
+updateUI();
 
 setInterval(() => {
 
-  const available =
-    tables.some(table => !table.busy);
+    spawnCustomer();
 
-  if (available) {
-    customerArrives();
-  }
+}, 3500);
 
-}, 6000);
+setInterval(() => {
 
-setTimeout(() => {
-  customerArrives();
-}, 2000);
+    if (Math.random() > 0.5) {
+        spawnCustomer();
+    }
+
+}, 7000);
