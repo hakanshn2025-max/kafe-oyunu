@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Kafe İşlet</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+
+<div class="game">
+
+  <header>
+    <div>
+      <small>☕ KAFE İŞLET</small>
+      <h1>Mahalle Kafen</h1>
+    </div>
+
+    <div class="money">
+      💰 <span id="money">500</span> TL
+    </div>
+  </header>
+
+  <div class="stats">
+    <div>👥 <b id="customers">0</b><small>Müşteri</small></div>
+    <div>⭐ <b>1.0</b><small>İtibar</small></div>
+    <div>🪑 <b id="tableNumber">4</b><small>Masa</small></div>
+  </div>
+
+  <div class="cafe">
+
+    <div class="cafe-title">
+      <b>☕ Kafen açık</b>
+      <span id="status">Müşteriler bekleniyor...</span>
+    </div>
+
+    <div id="tables" class="tables"></div>
+
+    <div class="door">🚪<br><small>GİRİŞ</small></div>
+
+  </div>
+
+  <div class="panel">
+
+    <button onclick="addTable()">
+      🪑
+      <span>
+        <b>Masa ekle</b>
+        <small>250 TL</small>
+      </span>
+    </button>
+
+    <button onclick="upgradeCafe()">
+      ✨
+      <span>
+        <b>Kafeyi geliştir</b>
+        <small>500 TL</small>
+      </span>
+    </button>
+
+  </div>
+
+  <p class="hint">
+    💡 Müşteri kalkınca masada <b>💰</b> belirir.
+    Paraya dokunarak paranı topla!
+  </p>
+
+</div>
+
+<script src="game.js"></script>
+
+</body>
+</html>
